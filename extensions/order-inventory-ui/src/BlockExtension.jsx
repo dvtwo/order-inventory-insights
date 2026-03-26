@@ -34,16 +34,28 @@ function Extension() {
     loadInventory();
   }, [orderId]);
 
+  // ==================== FIXED SETTINGS LOADER ====================
   async function loadSettings() {
     try {
-      // FIXED: Use shopify.fetch (authenticated in extension context)
-      const response = await shopify.fetch('/api/settings');
+      console.log("🔍 Block: Starting settings fetch...");
+
+      // Correct way for Shopify UI Extensions (Preact)
+      const token = await shopify.sessionToken.get();
+
+      const response = await fetch('/api/settings', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      console.log("🔍 Block: Response status =", response.status);
 
       if (!response.ok) {
         throw new Error(`Settings request failed (${response.status})`);
       }
 
       const json = await response.json();
+      console.log("✅ Block: Settings loaded from server =", json);
 
       return {
         lowStockThreshold: Number(json?.lowStockThreshold ?? 2),
@@ -51,8 +63,7 @@ function Extension() {
         showFulfillmentHint: json?.showFulfillmentHint ?? true,
       };
     } catch (err) {
-      console.error('Settings load failed:', err);
-
+      console.error("❌ Block: Settings load FAILED:", err);
       return {
         lowStockThreshold: 2,
         showOutOfStockHighlight: true,
@@ -60,6 +71,7 @@ function Extension() {
       };
     }
   }
+  // ============================================================
 
   async function adminGraphQL(query, variables = {}) {
     const response = await fetch('shopify:admin/api/graphql.json', {
