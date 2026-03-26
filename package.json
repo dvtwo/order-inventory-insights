@@ -1,13 +1,12 @@
 {
   "name": "order-inventory-viewer-admin",
   "private": true,
-
   "scripts": {
-  "build": "react-router build",
-  "dev": "shopify app dev",
-  "start": "node ./build/server/index.js",
-  "prisma:deploy": "prisma migrate deploy"
-},
+    "build": "react-router build",
+    "dev": "shopify app dev",
+    "start": "node ./server/index.js",
+    "prisma:deploy": "prisma migrate deploy"
+  },
   "type": "module",
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
