@@ -1,6 +1,6 @@
 import '@shopify/ui-extensions/preact';
-import {render} from 'preact';
-import {useEffect, useState} from 'preact/hooks';
+import { render } from 'preact';
+import { useEffect, useState } from 'preact/hooks';
 
 export default function extension() {
   render(<Extension />, document.body);
@@ -36,7 +36,8 @@ function Extension() {
 
   async function loadSettings() {
     try {
-      const response = await fetch('/api/settings');
+      // FIXED: Use shopify.fetch (authenticated in extension context)
+      const response = await shopify.fetch('/api/settings');
 
       if (!response.ok) {
         throw new Error(`Settings request failed (${response.status})`);
@@ -63,7 +64,7 @@ function Extension() {
   async function adminGraphQL(query, variables = {}) {
     const response = await fetch('shopify:admin/api/graphql.json', {
       method: 'POST',
-      body: JSON.stringify({query, variables}),
+      body: JSON.stringify({ query, variables }),
     });
 
     const json = await response.json();
@@ -248,7 +249,7 @@ function Extension() {
             }
           }
         `,
-        {id: orderId},
+        { id: orderId },
       );
 
       const lineItems =
@@ -326,7 +327,7 @@ function Extension() {
               }
             }
           `,
-          {id: inventoryItemId},
+          { id: inventoryItemId },
         );
 
         const levels =
