@@ -4,7 +4,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "shopify app dev",
-    "start": "node ./server/index.js",
+    "start": "react-router-serve ./build/server/index.js",
     "prisma:deploy": "prisma migrate deploy"
   },
   "type": "module",
