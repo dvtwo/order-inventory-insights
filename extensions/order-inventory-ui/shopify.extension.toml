@@ -1,0 +1,14 @@
+api_version = "2025-10"
+
+[[extensions]]
+name = "t:name"
+handle = "order-inventory-ui"
+type = "ui_extension"
+uid = "8730c1b4-10a0-48de-178a-3b92949277a7a17b01ae"
+
+[extensions.capabilities]
+network_access = true
+
+[[extensions.targeting]]
+module = "./src/BlockExtension.jsx"
+target = "admin.order-details.block.render"
