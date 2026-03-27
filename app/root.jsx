@@ -1,4 +1,3 @@
-import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 
 export default function App() {
@@ -11,9 +10,7 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <AppProvider>
-          <Outlet />
-        </AppProvider>
+        <Outlet />
         <ScrollRestoration />
         <Scripts />
       </body>
