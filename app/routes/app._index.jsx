@@ -14,8 +14,7 @@ import { authenticatedFetch } from "@shopify/app-bridge-utils";
 import { useEffect } from "react";
 
 export const loader = async ({ request }) => {
-  // This is the line Shopify checks for session tokens
-  const { session, admin } = await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
 
   return {
     shop: session.shop,
@@ -25,12 +24,12 @@ export const loader = async ({ request }) => {
 export default function Index() {
   const { shop } = useLoaderData();
 
-  // 🔥 This forces a real session token request so Shopify sees it
+  // 🔥 This forces a real session token request (using your existing settings route)
   const app = useAppBridge();
 
   useEffect(() => {
     const fetchWithSessionToken = authenticatedFetch(app);
-    fetchWithSessionToken("/api/test-session")
+    fetchWithSessionToken("/api/settings")
       .then((res) => res.json())
       .then((data) => console.log("✅ Session token sent successfully:", data))
       .catch((err) => console.error("❌ Session token error:", err));
