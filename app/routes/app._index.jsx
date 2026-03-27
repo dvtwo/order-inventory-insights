@@ -1,13 +1,6 @@
 import { useLoaderData } from "react-router";
 import { authenticate } from "../shopify.server";
-import {
-  Page,
-  Layout,
-  Card,
-  BlockStack,
-  Text,
-  Banner,
-} from "@shopify/polaris";
+import { Page, Layout, Card, BlockStack, Text, Banner } from "@shopify/polaris";
 
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
@@ -26,13 +19,14 @@ export default function Index() {
         <Layout.Section>
           <Card>
             <BlockStack gap="400">
-              <Banner title="✅ App is now working" tone="success">
+              <Banner title="✅ App is running" tone="success">
                 <p>Shop: <strong>{shop}</strong></p>
+                <p>Session token is now active for Shopify checks.</p>
               </Banner>
 
               <Text as="p" variant="bodyMd">
-                OrderSight Inventory Insights is running.<br />
-                Shopify’s Embedded App check should now see the session token.
+                This is the minimal working page.<br />
+                Your full dashboard will be restored in the next update.
               </Text>
             </BlockStack>
           </Card>
