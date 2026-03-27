@@ -36,18 +36,13 @@ function Extension() {
 
   async function loadSettings() {
     try {
-      console.log("🔍 Block: Starting settings fetch...");
-
-      const response = await shopify.fetch('/api/settings');
-
-      console.log("🔍 Block: Response status =", response.status);
+      const response = await fetch('/api/settings');
 
       if (!response.ok) {
         throw new Error(`Settings request failed (${response.status})`);
       }
 
       const json = await response.json();
-      console.log("✅ Block: Settings loaded from server =", json);
 
       return {
         lowStockThreshold: Number(json?.lowStockThreshold ?? 2),
@@ -55,7 +50,7 @@ function Extension() {
         showFulfillmentHint: json?.showFulfillmentHint ?? true,
       };
     } catch (err) {
-      console.error("❌ Block: Settings load FAILED:", err);
+      console.error('Settings load failed:', err); // only keep this one for safety
       return {
         lowStockThreshold: 2,
         showOutOfStockHighlight: true,
