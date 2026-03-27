@@ -34,19 +34,11 @@ function Extension() {
     loadInventory();
   }, [orderId]);
 
-  // ==================== FIXED SETTINGS LOADER ====================
   async function loadSettings() {
     try {
       console.log("🔍 Block: Starting settings fetch...");
 
-      // Correct way for Shopify UI Extensions (Preact)
-      const token = await shopify.sessionToken.get();
-
-      const response = await fetch('/api/settings', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await shopify.fetch('/api/settings');
 
       console.log("🔍 Block: Response status =", response.status);
 
@@ -71,7 +63,6 @@ function Extension() {
       };
     }
   }
-  // ============================================================
 
   async function adminGraphQL(query, variables = {}) {
     const response = await fetch('shopify:admin/api/graphql.json', {
@@ -563,5 +554,5 @@ function Extension() {
         )}
       </s-stack>
     </s-admin-block>
-  ); 
+  );
 }
