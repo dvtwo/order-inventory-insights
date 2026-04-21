@@ -18,36 +18,56 @@ export default function App() {
   return (
     <div className={styles.index}>
       <div className={styles.content}>
-        <h1 className={styles.heading}>A short heading about [your app]</h1>
+
+        {/* HERO */}
+        <h1 className={styles.heading}>
+          OrderSight Inventory Insights
+        </h1>
+
         <p className={styles.text}>
-          A tagline about [your app] that describes your value proposition.
+          Real-time inventory visibility directly inside Shopify orders.
         </p>
+
+        <p className={styles.text}>
+          Help your team view inventory by location, identify low stock instantly,
+          and make faster fulfillment decisions without leaving the order page.
+        </p>
+
+        {/* LOGIN */}
         {showForm && (
           <Form className={styles.form} method="post" action="/auth/login">
             <label className={styles.label}>
-              <span>Shop domain</span>
-              <input className={styles.input} type="text" name="shop" />
-              <span>e.g: my-shop-domain.myshopify.com</span>
+              <span>Enter your Shopify store</span>
+              <input
+                className={styles.input}
+                type="text"
+                name="shop"
+                placeholder="your-store.myshopify.com"
+              />
             </label>
+
             <button className={styles.button} type="submit">
-              Log in
+              Log in with Shopify
             </button>
           </Form>
         )}
+
+        {/* FEATURES */}
         <ul className={styles.list}>
           <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
+            <strong>Inventory by location.</strong> Instantly see stock levels
+            across all locations for every order line item.
           </li>
           <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
+            <strong>Low stock visibility.</strong> Identify inventory issues
+            before they impact fulfillment.
           </li>
           <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
+            <strong>Better fulfillment decisions.</strong> Give your team the
+            context they need to choose the right location faster.
           </li>
         </ul>
+
       </div>
     </div>
   );
