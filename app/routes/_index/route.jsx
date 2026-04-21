@@ -30,7 +30,7 @@ export default function App() {
         </p>
 
         {showForm && (
-          <Form className={styles.form} method="post" action="/auth/login">
+          <Form className={styles.form} method="get" action="/auth/login">
             <label className={styles.label}>
               <span className={styles.labelText}>
                 Get started with your Shopify store
