@@ -907,6 +907,17 @@ export default function AppIndex() {
                           </div>
                         )}
 
+                        {billing.returnState === "declined" && (
+                          <div style={styles.bannerWrap}>
+                            <Banner tone="warning">
+                              <p>
+                                Billing was declined. You can select a plan
+                                again using the button above.
+                              </p>
+                            </Banner>
+                          </div>
+                        )}
+
                         {billing.error && (
                           <div style={styles.bannerWrap}>
                             <Banner tone="warning">

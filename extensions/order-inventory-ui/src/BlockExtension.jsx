@@ -410,10 +410,10 @@ function Extension() {
         ) : settings.appLocked ? (
           <s-box padding="small">
             <s-stack direction="block" gap="small">
-              <s-text fontweight="bold">Billing required</s-text>
+              <s-text fontweight="bold">Subscription required</s-text>
               <s-text>
-                Start your 7-day free trial in OrderSight to unlock inventory
-                availability on orders.
+                An active subscription is required to view inventory data.
+                Visit the app to manage billing.
               </s-text>
             </s-stack>
           </s-box>
