@@ -1,5 +1,4 @@
-import { redirect, Form, useLoaderData } from "react-router";
-import { login } from "../../shopify.server";
+import { redirect } from "react-router";
 import styles from "./styles.module.css";
 
 export const loader = async ({ request }) => {
@@ -9,12 +8,10 @@ export const loader = async ({ request }) => {
     throw redirect(`/app?${url.searchParams.toString()}`);
   }
 
-  return { showForm: Boolean(login) };
+  return null;
 };
 
 export default function App() {
-  const { showForm } = useLoaderData();
-
   return (
     <div className={styles.index}>
       <div className={styles.content}>
@@ -28,30 +25,6 @@ export default function App() {
           Identify low stock instantly and help your team make faster, more
           accurate fulfillment decisions without leaving the order page.
         </p>
-
-        {showForm && (
-          <Form className={styles.form} method="get" action="/auth/login">
-            <label className={styles.label}>
-              <span className={styles.labelText}>
-                Get started with your Shopify store
-              </span>
-              <input
-                className={styles.input}
-                type="text"
-                name="shop"
-                placeholder="your-store.myshopify.com"
-                autoComplete="off"
-              />
-              <span className={styles.helperText}>
-                Enter your Shopify domain to securely log in and install the app.
-              </span>
-            </label>
-
-            <button className={styles.button} type="submit">
-              Log in with Shopify
-            </button>
-          </Form>
-        )}
 
         <div className={styles.screenshotWrap}>
           <img

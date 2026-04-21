@@ -27,6 +27,7 @@ import {
   useNavigation,
   useRouteError,
   isRouteErrorResponse,
+  useFetcher,
 } from "react-router";
 
 function formatBillingStatus(status) {
@@ -191,7 +192,7 @@ export const loader = async ({request}) => {
 
     const managedPricingUrl = appHandle
       ? `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`
-      : "";
+      : `https://admin.shopify.com/store/${storeHandle}/charges`;
 
     const rawStatus = activeSubscription?.status || "NOT_ACTIVE";
     const hasActivePayment = Boolean(
@@ -221,7 +222,7 @@ export const loader = async ({request}) => {
       priceText: "$9.99 USD every 30 days",
       managedPricingUrl: appHandle
         ? `https://admin.shopify.com/store/${storeHandle}/charges/${appHandle}/pricing_plans`
-        : "",
+        : `https://admin.shopify.com/store/${storeHandle}/charges`,
       error: error?.message || "Unable to load billing status.",
     };
   }
@@ -235,11 +236,11 @@ export const loader = async ({request}) => {
       lowStockThreshold: settings.lowStockThreshold,
       showOutOfStockHighlight: settings.showOutOfStockHighlight,
       showFulfillmentHint: settings.showFulfillmentHint,
+      onboardingHidden: settings.onboardingHidden ?? false,
     },
     billing: {
       ...billingInfo,
       returnState: url.searchParams.get("billing") || "",
-      missingHandle: !process.env.SHOPIFY_MANAGED_PRICING_HANDLE,
     },
   };
 };
@@ -247,6 +248,26 @@ export const loader = async ({request}) => {
 export const action = async ({request}) => {
   const {session} = await authenticate.admin(request);
   const formData = await request.formData();
+
+  const intent = formData.get("intent");
+
+  if (intent === "hideOnboarding" || intent === "showOnboarding") {
+    const onboardingHidden = intent === "hideOnboarding";
+
+    await db.appSettings.upsert({
+      where: {shop: session.shop},
+      update: {onboardingHidden},
+      create: {
+        shop: session.shop,
+        lowStockThreshold: 2,
+        showOutOfStockHighlight: true,
+        showFulfillmentHint: true,
+        onboardingHidden,
+      },
+    });
+
+    return {success: true};
+  }
 
   const lowStockThreshold = Number(formData.get("lowStockThreshold") || 2);
   const showOutOfStockHighlight =
@@ -336,6 +357,7 @@ export default function AppIndex() {
   const actionData = useActionData();
   const navigation = useNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const onboardingFetcher = useFetcher();
 
   const hasActivePlan = billing.hasActivePayment;
   const requestedTab = searchParams.get("tab") || "home";
@@ -352,8 +374,13 @@ export default function AppIndex() {
     Boolean(settings.showFulfillmentHint),
   );
 
-  const onboardingHiddenKey = `ordersight-onboarding-hidden-${shop}`;
-  const [onboardingHidden, setOnboardingHidden] = useState(false);
+  const pendingIntent = onboardingFetcher.formData?.get("intent");
+  const onboardingHidden =
+    pendingIntent === "hideOnboarding"
+      ? true
+      : pendingIntent === "showOnboarding"
+        ? false
+        : settings.onboardingHidden;
 
   useEffect(() => {
     setLowStockThreshold(String(settings.lowStockThreshold ?? 2));
@@ -369,40 +396,13 @@ export default function AppIndex() {
     }
   }, [hasActivePlan, requestedTab, searchParams, setSearchParams]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    try {
-      const savedHidden = window.localStorage.getItem(onboardingHiddenKey);
-      setOnboardingHidden(savedHidden === "true");
-    } catch (error) {
-      console.error("Failed to load onboarding state", error);
-    }
-  }, [onboardingHiddenKey]);
-
   const hideOnboarding = useCallback(() => {
-    setOnboardingHidden(true);
-
-    if (typeof window === "undefined") return;
-
-    try {
-      window.localStorage.setItem(onboardingHiddenKey, "true");
-    } catch (error) {
-      console.error("Failed to hide onboarding", error);
-    }
-  }, [onboardingHiddenKey]);
+    onboardingFetcher.submit({intent: "hideOnboarding"}, {method: "post"});
+  }, [onboardingFetcher]);
 
   const showOnboarding = useCallback(() => {
-    setOnboardingHidden(false);
-
-    if (typeof window === "undefined") return;
-
-    try {
-      window.localStorage.setItem(onboardingHiddenKey, "false");
-    } catch (error) {
-      console.error("Failed to show onboarding", error);
-    }
-  }, [onboardingHiddenKey]);
+    onboardingFetcher.submit({intent: "showOnboarding"}, {method: "post"});
+  }, [onboardingFetcher]);
 
   const tabs = useMemo(
     () => [
@@ -848,18 +848,16 @@ export default function AppIndex() {
                             </Box>
                           </div>
 
-                          {billing.managedPricingUrl ? (
-                            <a
-                              href={billing.managedPricingUrl}
-                              target="_top"
-                              rel="noreferrer"
-                              style={{textDecoration: "none"}}
-                            >
-                              <Button variant="primary">
-                                Manage Shopify plan
-                              </Button>
-                            </a>
-                          ) : null}
+                          <a
+                            href={billing.managedPricingUrl}
+                            target="_top"
+                            rel="noreferrer"
+                            style={{textDecoration: "none"}}
+                          >
+                            <Button variant="primary">
+                              Manage Shopify plan
+                            </Button>
+                          </a>
                         </div>
 
                         <Box paddingBlockEnd="400">
@@ -882,18 +880,6 @@ export default function AppIndex() {
                                 Start your 7-day free trial to unlock real-time
                                 inventory visibility directly inside Shopify
                                 orders.
-                              </p>
-                            </Banner>
-                          </div>
-                        )}
-
-                        {billing.missingHandle && (
-                          <div style={styles.bannerWrap}>
-                            <Banner tone="warning">
-                              <p>
-                                Missing SHOPIFY_MANAGED_PRICING_HANDLE in your
-                                environment settings. Add it to enable the
-                                Shopify hosted plan page button.
                               </p>
                             </Banner>
                           </div>

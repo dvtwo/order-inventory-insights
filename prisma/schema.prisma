@@ -39,6 +39,7 @@ model AppSettings {
   lowStockThreshold       Int      @default(2)
   showOutOfStockHighlight Boolean  @default(true)
   showFulfillmentHint     Boolean  @default(true)
+  onboardingHidden        Boolean  @default(false)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 }
