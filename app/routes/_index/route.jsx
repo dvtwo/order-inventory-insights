@@ -18,32 +18,33 @@ export default function App() {
   return (
     <div className={styles.index}>
       <div className={styles.content}>
-
-        {/* HERO */}
-        <h1 className={styles.heading}>
-          OrderSight Inventory Insights
-        </h1>
+        <h1 className={styles.heading}>OrderSight Inventory Insights</h1>
 
         <p className={styles.text}>
-          Real-time inventory visibility directly inside Shopify orders.
+          See inventory across all locations — directly inside Shopify orders.
         </p>
 
-        <p className={styles.text}>
-          Help your team view inventory by location, identify low stock instantly,
-          and make faster fulfillment decisions without leaving the order page.
+        <p className={styles.subtext}>
+          Identify low stock instantly and help your team make faster, more
+          accurate fulfillment decisions without leaving the order page.
         </p>
 
-        {/* LOGIN */}
         {showForm && (
           <Form className={styles.form} method="post" action="/auth/login">
             <label className={styles.label}>
-              <span>Enter your Shopify store</span>
+              <span className={styles.labelText}>
+                Get started with your Shopify store
+              </span>
               <input
                 className={styles.input}
                 type="text"
                 name="shop"
                 placeholder="your-store.myshopify.com"
+                autoComplete="off"
               />
+              <span className={styles.helperText}>
+                Enter your Shopify domain to securely log in and install the app.
+              </span>
             </label>
 
             <button className={styles.button} type="submit">
@@ -52,22 +53,41 @@ export default function App() {
           </Form>
         )}
 
-        {/* FEATURES */}
-        <ul className={styles.list}>
-          <li>
-            <strong>Inventory by location.</strong> Instantly see stock levels
-            across all locations for every order line item.
-          </li>
-          <li>
-            <strong>Low stock visibility.</strong> Identify inventory issues
-            before they impact fulfillment.
-          </li>
-          <li>
-            <strong>Better fulfillment decisions.</strong> Give your team the
-            context they need to choose the right location faster.
-          </li>
-        </ul>
+        <div className={styles.screenshotWrap}>
+          <img
+            src="/feature-1.png"
+            alt="OrderSight inventory inside Shopify orders"
+            className={styles.screenshot}
+          />
+        </div>
 
+        <div className={styles.features}>
+          <div className={styles.featureCard}>
+            <strong className={styles.featureTitle}>Inventory by location</strong>
+            <p className={styles.featureText}>
+              Instantly see stock levels across all locations for every order
+              line item.
+            </p>
+          </div>
+
+          <div className={styles.featureCard}>
+            <strong className={styles.featureTitle}>Low stock visibility</strong>
+            <p className={styles.featureText}>
+              Identify inventory issues before they impact fulfillment or cause
+              delays.
+            </p>
+          </div>
+
+          <div className={styles.featureCard}>
+            <strong className={styles.featureTitle}>
+              Better fulfillment decisions
+            </strong>
+            <p className={styles.featureText}>
+              Give your team the context they need to choose the right location
+              faster.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
