@@ -510,18 +510,26 @@ function Extension() {
                                 <s-box paddingBlockStart="extra-tight">
                                   <s-stack direction="block" gap="extra-tight">
                                     {item.locations.map((loc) => (
-                                      <s-text
+                                      <s-inline-stack
                                         key={loc.locationId}
-                                        appearance="subdued"
-                                        size="small"
+                                        gap="none"
+                                        alignment="start"
                                       >
                                         <s-text size="small" fontweight="bold">
                                           {loc.locationName}:
-                                        </s-text>{" "}
-                                        On hand: {loc.onHand ?? 0}
-                                        {"  •  "}Committed: {loc.committed ?? 0}
-                                        {"  •  "}Available: {loc.available ?? 0}
-                                      </s-text>
+                                        </s-text>
+                                        <s-text
+                                          appearance="subdued"
+                                          size="small"
+                                        >
+                                          {" On hand: "}
+                                          {loc.onHand ?? 0}
+                                          {"  •  Committed: "}
+                                          {loc.committed ?? 0}
+                                          {"  •  Available: "}
+                                          {loc.available ?? 0}
+                                        </s-text>
+                                      </s-inline-stack>
                                     ))}
                                   </s-stack>
                                 </s-box>
