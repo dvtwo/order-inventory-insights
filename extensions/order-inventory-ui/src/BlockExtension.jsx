@@ -502,20 +502,51 @@ function Extension() {
                                 SKU: {item.sku} | Qty: {item.orderedQty}
                               </s-text>
 
-                              <s-text
-                                appearance="subdued"
-                                size="small"
-                                numberOfLines={2}
-                              >
-                                {item.tracked === false
-                                  ? "Tracking disabled"
-                                  : item.locations
-                                      .map(
-                                        (loc) =>
-                                          `${loc.locationName}: ${loc.onHand ?? 0} on hand / ${loc.committed ?? 0} committed / ${loc.available ?? 0} available`,
-                                      )
-                                      .join(" | ")}
-                              </s-text>
+                              {item.tracked === false ? (
+                                <s-text appearance="subdued" size="small">
+                                  Tracking disabled
+                                </s-text>
+                              ) : (
+                                <s-box paddingBlockStart="extra-tight">
+                                  <s-stack direction="block" gap="extra-tight">
+                                    {item.locations.map((loc) => (
+                                      <s-stack
+                                        key={loc.locationId}
+                                        direction="block"
+                                        gap="none"
+                                      >
+                                        <s-text size="small" fontweight="bold">
+                                          {loc.locationName}
+                                        </s-text>
+
+                                        <s-inline-stack
+                                          gap="small"
+                                          alignment="start"
+                                        >
+                                          <s-text
+                                            appearance="subdued"
+                                            size="small"
+                                          >
+                                            On hand: {loc.onHand ?? 0}
+                                          </s-text>
+                                          <s-text
+                                            appearance="subdued"
+                                            size="small"
+                                          >
+                                            Committed: {loc.committed ?? 0}
+                                          </s-text>
+                                          <s-text
+                                            appearance="subdued"
+                                            size="small"
+                                          >
+                                            Available: {loc.available ?? 0}
+                                          </s-text>
+                                        </s-inline-stack>
+                                      </s-stack>
+                                    ))}
+                                  </s-stack>
+                                </s-box>
+                              )}
 
                               {item.tracked !== false &&
                               settings.showFulfillmentHint ? (
