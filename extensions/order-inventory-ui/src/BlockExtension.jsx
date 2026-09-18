@@ -1,6 +1,6 @@
-import '@shopify/ui-extensions/preact';
-import { render } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import "@shopify/ui-extensions/preact";
+import { render } from "preact";
+import { useEffect, useState } from "preact/hooks";
 
 export default function extension() {
   render(<Extension />, document.body);
@@ -8,7 +8,7 @@ export default function extension() {
 
 function Extension() {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [settings, setSettings] = useState({
@@ -16,8 +16,8 @@ function Extension() {
     showOutOfStockHighlight: true,
     showFulfillmentHint: true,
     appLocked: true,
-    billingStatus: 'NOT_ACTIVE',
-    billingPlanName: '',
+    billingStatus: "NOT_ACTIVE",
+    billingPlanName: "",
   });
 
   const pageSize = 2;
@@ -25,7 +25,7 @@ function Extension() {
 
   useEffect(() => {
     if (!orderId) {
-      setError('No order detected.');
+      setError("No order detected.");
       setLoading(false);
       return;
     }
@@ -36,7 +36,7 @@ function Extension() {
 
   async function loadSettings() {
     try {
-      const response = await fetch('/api/settings');
+      const response = await fetch("/api/settings");
 
       if (!response.ok) {
         throw new Error(`Settings request failed (${response.status})`);
@@ -50,7 +50,7 @@ function Extension() {
         showFulfillmentHint: json?.showFulfillmentHint ?? true,
       };
     } catch (err) {
-      console.error('Settings load failed:', err); // only keep this one for safety
+      console.error("Settings load failed:", err); // only keep this one for safety
       return {
         lowStockThreshold: 2,
         showOutOfStockHighlight: true,
@@ -60,15 +60,15 @@ function Extension() {
   }
 
   async function adminGraphQL(query, variables = {}) {
-    const response = await fetch('shopify:admin/api/graphql.json', {
-      method: 'POST',
+    const response = await fetch("shopify:admin/api/graphql.json", {
+      method: "POST",
       body: JSON.stringify({ query, variables }),
     });
 
     const json = await response.json();
 
     if (json.errors?.length) {
-      throw new Error(json.errors.map((e) => e.message).join(', '));
+      throw new Error(json.errors.map((e) => e.message).join(", "));
     }
 
     return json;
@@ -92,13 +92,13 @@ function Extension() {
         result?.data?.currentAppInstallation?.activeSubscriptions || [];
 
       const activeSubscription =
-        activeSubscriptions.find((sub) => sub.status === 'ACTIVE') ||
+        activeSubscriptions.find((sub) => sub.status === "ACTIVE") ||
         activeSubscriptions[0] ||
         null;
 
-      const billingStatus = activeSubscription?.status || 'NOT_ACTIVE';
-      const billingPlanName = activeSubscription?.name || '';
-      const appLocked = billingStatus !== 'ACTIVE';
+      const billingStatus = activeSubscription?.status || "NOT_ACTIVE";
+      const billingPlanName = activeSubscription?.name || "";
+      const appLocked = billingStatus !== "ACTIVE";
 
       return {
         appLocked,
@@ -106,12 +106,12 @@ function Extension() {
         billingPlanName,
       };
     } catch (err) {
-      console.error('Billing status load failed:', err);
+      console.error("Billing status load failed:", err);
 
       return {
         appLocked: true,
-        billingStatus: 'UNAVAILABLE',
-        billingPlanName: '',
+        billingStatus: "UNAVAILABLE",
+        billingPlanName: "",
       };
     }
   }
@@ -124,14 +124,26 @@ function Extension() {
   ) {
     if (tracked === false) {
       return {
+        totalOnHand: 0,
+        totalCommitted: 0,
         totalAvailable: 0,
         outOfStock: false,
         lowStock: false,
-        bestLocationText: 'Inventory tracking disabled',
+        bestLocationText: "Inventory tracking disabled",
       };
     }
 
     const safeLocations = Array.isArray(locations) ? locations : [];
+
+    const totalOnHand = safeLocations.reduce(
+      (sum, loc) => sum + Math.max(0, Number(loc.onHand) || 0),
+      0,
+    );
+
+    const totalCommitted = safeLocations.reduce(
+      (sum, loc) => sum + Math.max(0, Number(loc.committed) || 0),
+      0,
+    );
 
     const totalAvailable = safeLocations.reduce(
       (sum, loc) => sum + Math.max(0, Number(loc.available) || 0),
@@ -139,36 +151,38 @@ function Extension() {
     );
 
     const fulfillableLocations = safeLocations
-      .filter((loc) => Math.max(0, Number(loc.available) || 0) >= orderedQty)
+      .filter((loc) => Math.max(0, Number(loc.onHand) || 0) >= orderedQty)
       .sort(
         (a, b) =>
-          Math.max(0, Number(b.available) || 0) -
-          Math.max(0, Number(a.available) || 0),
+          Math.max(0, Number(b.onHand) || 0) -
+          Math.max(0, Number(a.onHand) || 0),
       );
 
     const fallbackLocations = [...safeLocations].sort(
       (a, b) =>
-        Math.max(0, Number(b.available) || 0) -
-        Math.max(0, Number(a.available) || 0),
+        Math.max(0, Number(b.onHand) || 0) - Math.max(0, Number(a.onHand) || 0),
     );
 
-    const bestLocation = fulfillableLocations[0] || fallbackLocations[0] || null;
-    const outOfStock = totalAvailable <= 0;
-    const lowStock = !outOfStock && totalAvailable <= lowStockThreshold;
+    const bestLocation =
+      fulfillableLocations[0] || fallbackLocations[0] || null;
+    const outOfStock = totalOnHand <= 0;
+    const lowStock = !outOfStock && totalOnHand <= lowStockThreshold;
 
-    let bestLocationText = 'No locations can fulfill this order';
+    let bestLocationText = "No locations can fulfill this order";
 
     if (bestLocation) {
-      const bestQty = Math.max(0, Number(bestLocation.available) || 0);
+      const bestQty = Math.max(0, Number(bestLocation.onHand) || 0);
 
       if (bestQty >= orderedQty) {
-        bestLocationText = `${bestLocation.locationName} can fulfill (${bestQty} available)`;
+        bestLocationText = `${bestLocation.locationName} can fulfill (${bestQty} on hand)`;
       } else if (bestQty > 0) {
-        bestLocationText = `${bestLocation.locationName} has the most stock (${bestQty} available)`;
+        bestLocationText = `${bestLocation.locationName} has the most stock (${bestQty} on hand)`;
       }
     }
 
     return {
+      totalOnHand,
+      totalCommitted,
       totalAvailable,
       outOfStock,
       lowStock,
@@ -179,7 +193,7 @@ function Extension() {
   async function loadInventory() {
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       const loadedSettings = await loadSettings();
       const billingInfo = await loadBillingStatus();
@@ -259,25 +273,26 @@ function Extension() {
         const inventoryItemId = item?.variant?.inventoryItem?.id;
         const tracked = item?.variant?.inventoryItem?.tracked;
 
-        const productTitle = item.product?.title || item.name || 'Unknown item';
+        const productTitle = item.product?.title || item.name || "Unknown item";
         const rawVariantTitle =
-          item.variant?.title && item.variant.title !== 'Default Title'
+          item.variant?.title && item.variant.title !== "Default Title"
             ? item.variant.title
-            : '';
+            : "";
 
         const variantTitle =
           rawVariantTitle &&
-          rawVariantTitle.trim().toLowerCase() !== productTitle.trim().toLowerCase()
+          rawVariantTitle.trim().toLowerCase() !==
+            productTitle.trim().toLowerCase()
             ? rawVariantTitle
-            : '';
+            : "";
 
         const baseItem = {
-          name: item.name || 'Unknown item',
+          name: item.name || "Unknown item",
           productTitle,
           variantTitle,
-          imageUrl: item.image?.url || '',
-          imageAlt: item.image?.altText || item.name || 'Product image',
-          sku: item.sku || 'No SKU',
+          imageUrl: item.image?.url || "",
+          imageAlt: item.image?.altText || item.name || "Product image",
+          sku: item.sku || "No SKU",
           orderedQty: item.quantity || 0,
         };
 
@@ -285,6 +300,8 @@ function Extension() {
           const mergedLocations = allLocations.map((loc) => ({
             locationId: loc.id,
             locationName: loc.name,
+            onHand: 0,
+            committed: 0,
             available: 0,
           }));
 
@@ -315,7 +332,7 @@ function Extension() {
                         id
                         name
                       }
-                      quantities(names: ["available"]) {
+                      quantities(names: ["on_hand", "committed", "available"]) {
                         name
                         quantity
                       }
@@ -335,15 +352,19 @@ function Extension() {
 
         for (const edge of levels) {
           const locationId = edge.node.location?.id;
-          const availableQty = Math.max(
-            0,
-            edge.node.quantities?.find((q) => q.name === 'available')?.quantity ?? 0,
-          );
+          const quantities = edge.node.quantities || [];
+          const getQuantity = (name) =>
+            Math.max(
+              0,
+              Number(quantities.find((q) => q.name === name)?.quantity ?? 0),
+            );
 
           if (locationId) {
             levelMap.set(locationId, {
               locationId,
-              available: availableQty,
+              onHand: getQuantity("on_hand"),
+              committed: getQuantity("committed"),
+              available: getQuantity("available"),
             });
           }
         }
@@ -353,6 +374,8 @@ function Extension() {
           return {
             locationId: loc.id,
             locationName: loc.name,
+            onHand: match ? Math.max(0, match.onHand) : 0,
+            committed: match ? Math.max(0, match.committed) : 0,
             available: match ? Math.max(0, match.available) : 0,
           };
         });
@@ -375,19 +398,19 @@ function Extension() {
       setItems(results);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Error loading inventory');
+      setError(err.message || "Error loading inventory");
     } finally {
       setLoading(false);
     }
   }
 
   const collapsedSummary = loading
-    ? 'Loading…'
+    ? "Loading…"
     : error
-      ? 'Error'
+      ? "Error"
       : settings.appLocked
-        ? 'Locked'
-        : `${items.length} item${items.length === 1 ? '' : 's'}`;
+        ? "Locked"
+        : `${items.length} item${items.length === 1 ? "" : "s"}`;
 
   const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
   const startIndex = (page - 1) * pageSize;
@@ -412,8 +435,8 @@ function Extension() {
             <s-stack direction="block" gap="small">
               <s-text fontweight="bold">Subscription required</s-text>
               <s-text>
-                An active subscription is required to view inventory data.
-                Visit the app to manage billing.
+                An active subscription is required to view inventory data. Visit
+                the app to manage billing.
               </s-text>
             </s-stack>
           </s-box>
@@ -432,7 +455,11 @@ function Extension() {
                   return (
                     <s-box key={`${item.sku}-${actualIndex}`} padding="none">
                       <s-stack direction="block" gap="extra-tight">
-                        <s-stack direction="inline" gap="small" alignment="start">
+                        <s-stack
+                          direction="inline"
+                          gap="small"
+                          alignment="start"
+                        >
                           <s-box inlineSize="28px" minInlineSize="28px">
                             {item.imageUrl ? (
                               <s-image
@@ -462,7 +489,11 @@ function Extension() {
                               </s-text>
 
                               {item.variantTitle ? (
-                                <s-text appearance="subdued" size="small" numberOfLines={1}>
+                                <s-text
+                                  appearance="subdued"
+                                  size="small"
+                                  numberOfLines={1}
+                                >
                                   {item.variantTitle}
                                 </s-text>
                               ) : null}
@@ -471,18 +502,27 @@ function Extension() {
                                 SKU: {item.sku} | Qty: {item.orderedQty}
                               </s-text>
 
-                              <s-text appearance="subdued" size="small" numberOfLines={2}>
+                              <s-text
+                                appearance="subdued"
+                                size="small"
+                                numberOfLines={2}
+                              >
                                 {item.tracked === false
-                                  ? 'Tracking disabled'
+                                  ? "Tracking disabled"
                                   : item.locations
                                       .map(
-                                        (loc) => `${loc.locationName}: ${loc.available ?? 0}`,
+                                        (loc) =>
+                                          `${loc.locationName}: ${loc.onHand ?? 0} on hand / ${loc.committed ?? 0} committed / ${loc.available ?? 0} available`,
                                       )
-                                      .join(' | ')}
+                                      .join(" | ")}
                               </s-text>
 
-                              {item.tracked !== false && settings.showFulfillmentHint ? (
-                                <s-inline-stack gap="extra-tight" alignment="start">
+                              {item.tracked !== false &&
+                              settings.showFulfillmentHint ? (
+                                <s-inline-stack
+                                  gap="extra-tight"
+                                  alignment="start"
+                                >
                                   <s-badge tone="success">
                                     {item.bestLocationText}
                                   </s-badge>
@@ -490,9 +530,12 @@ function Extension() {
                               ) : null}
 
                               {item.tracked !== false && item.lowStock ? (
-                                <s-inline-stack gap="extra-tight" alignment="start">
+                                <s-inline-stack
+                                  gap="extra-tight"
+                                  alignment="start"
+                                >
                                   <s-badge tone="warning">
-                                    Low stock ({item.totalAvailable})
+                                    Low stock ({item.totalOnHand} on hand)
                                   </s-badge>
                                 </s-inline-stack>
                               ) : null}
@@ -500,8 +543,13 @@ function Extension() {
                               {item.tracked !== false &&
                               item.outOfStock &&
                               settings.showOutOfStockHighlight ? (
-                                <s-inline-stack gap="extra-tight" alignment="start">
-                                  <s-badge tone="critical">Out of stock</s-badge>
+                                <s-inline-stack
+                                  gap="extra-tight"
+                                  alignment="start"
+                                >
+                                  <s-badge tone="critical">
+                                    Out of stock
+                                  </s-badge>
                                 </s-inline-stack>
                               ) : null}
                             </s-stack>
@@ -521,11 +569,17 @@ function Extension() {
             </s-box>
 
             {items.length > pageSize ? (
-              <s-box paddingInline="small" paddingBlockStart="none" paddingBlockEnd="small">
+              <s-box
+                paddingInline="small"
+                paddingBlockStart="none"
+                paddingBlockEnd="small"
+              >
                 <s-stack direction="inline" gap="small" alignment="center">
                   <s-button
                     disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    onClick={() =>
+                      setPage((current) => Math.max(1, current - 1))
+                    }
                   >
                     Previous
                   </s-button>
