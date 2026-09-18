@@ -510,54 +510,18 @@ function Extension() {
                                 <s-box paddingBlockStart="extra-tight">
                                   <s-stack direction="block" gap="extra-tight">
                                     {item.locations.map((loc) => (
-                                      <s-inline-stack
+                                      <s-text
                                         key={loc.locationId}
-                                        gap="none"
-                                        alignment="start"
+                                        appearance="subdued"
+                                        size="small"
                                       >
                                         <s-text size="small" fontweight="bold">
                                           {loc.locationName}:
-                                        </s-text>
-                                        <s-text
-                                          appearance="subdued"
-                                          size="small"
-                                        >
-                                          {" On hand: "}
-                                        </s-text>
-                                        <s-text
-                                          appearance="subdued"
-                                          size="small"
-                                          fontweight="bold"
-                                        >
-                                          {loc.onHand ?? 0}
-                                        </s-text>
-                                        <s-text
-                                          appearance="subdued"
-                                          size="small"
-                                        >
-                                          {"  •  Committed: "}
-                                        </s-text>
-                                        <s-text
-                                          appearance="subdued"
-                                          size="small"
-                                          fontweight="bold"
-                                        >
-                                          {loc.committed ?? 0}
-                                        </s-text>
-                                        <s-text
-                                          appearance="subdued"
-                                          size="small"
-                                        >
-                                          {"  •  Available: "}
-                                        </s-text>
-                                        <s-text
-                                          appearance="subdued"
-                                          size="small"
-                                          fontweight="bold"
-                                        >
-                                          {loc.available ?? 0}
-                                        </s-text>
-                                      </s-inline-stack>
+                                        </s-text>{" "}
+                                        On hand: {loc.onHand ?? 0}
+                                        {"  •  "}Committed: {loc.committed ?? 0}
+                                        {"  •  "}Available: {loc.available ?? 0}
+                                      </s-text>
                                     ))}
                                   </s-stack>
                                 </s-box>
