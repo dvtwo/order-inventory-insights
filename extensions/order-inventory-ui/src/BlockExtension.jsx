@@ -433,7 +433,7 @@ function Extension() {
         ) : settings.appLocked ? (
           <s-box padding="small">
             <s-stack direction="block" gap="small">
-              <s-text fontweight="bold">Subscription required</s-text>
+              <s-text type="strong">Subscription required</s-text>
               <s-text>
                 An active subscription is required to view inventory data. Visit
                 the app to manage billing.
@@ -484,7 +484,7 @@ function Extension() {
 
                           <s-box inlineSize="fill">
                             <s-stack direction="block" gap="none">
-                              <s-text fontweight="bold" numberOfLines={1}>
+                              <s-text type="strong" numberOfLines={1}>
                                 {item.productTitle || item.name}
                               </s-text>
 
@@ -510,26 +510,18 @@ function Extension() {
                                 <s-box paddingBlockStart="extra-tight">
                                   <s-stack direction="block" gap="extra-tight">
                                     {item.locations.map((loc) => (
-                                      <s-inline-stack
+                                      <s-text
                                         key={loc.locationId}
-                                        gap="none"
-                                        alignment="start"
+                                        appearance="subdued"
+                                        size="small"
                                       >
-                                        <s-text size="small" fontweight="bold">
+                                        <s-text size="small" type="strong">
                                           {loc.locationName}:
-                                        </s-text>
-                                        <s-text
-                                          appearance="subdued"
-                                          size="small"
-                                        >
-                                          {" On hand: "}
-                                          {loc.onHand ?? 0}
-                                          {"  •  Committed: "}
-                                          {loc.committed ?? 0}
-                                          {"  •  Available: "}
-                                          {loc.available ?? 0}
-                                        </s-text>
-                                      </s-inline-stack>
+                                        </s-text>{" "}
+                                        On hand: {loc.onHand ?? 0}
+                                        {"  •  "}Committed: {loc.committed ?? 0}
+                                        {"  •  "}Available: {loc.available ?? 0}
+                                      </s-text>
                                     ))}
                                   </s-stack>
                                 </s-box>
