@@ -22,7 +22,7 @@ api_version = "2025-10"
   uri = "/webhooks/app/scopes_update"
 
 [access_scopes]
-scopes = "read_inventory,read_locations,read_orders"
+scopes = "read_inventory,read_locations,read_orders,read_products"
 
 [auth]
 redirect_urls = [
@@ -30,4 +30,3 @@ redirect_urls = [
   "https://order-inventory-insights.onrender.com/auth/shopify/callback",
   "https://order-inventory-insights.onrender.com/api/auth/callback"
 ]
-
