@@ -267,6 +267,12 @@ function Extension() {
       const lineItems =
         orderResult?.data?.order?.lineItems?.edges?.map((e) => e.node) || [];
 
+      if (!orderResult?.data?.order) {
+        throw new Error(
+          "Order line items are unavailable. Older orders require the read_all_orders permission; update the app permissions, then reauthorize the app.",
+        );
+      }
+
       const results = [];
 
       for (const item of lineItems) {
