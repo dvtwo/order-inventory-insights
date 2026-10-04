@@ -135,6 +135,8 @@ function Extension() {
         outOfStock: false,
         lowStock: false,
         bestLocationText: "Inventory tracking disabled",
+        bestLocationId: "",
+        bestLocationCanFulfill: false,
       };
     }
 
@@ -148,6 +150,8 @@ function Extension() {
         outOfStock: false,
         lowStock: false,
         bestLocationText: "No enabled inventory locations",
+        bestLocationId: "",
+        bestLocationCanFulfill: false,
       };
     }
 
@@ -185,14 +189,16 @@ function Extension() {
     const lowStock = !outOfStock && totalOnHand <= lowStockThreshold;
 
     let bestLocationText = "No locations can fulfill this order";
+    let bestLocationId = "";
+    let bestLocationCanFulfill = false;
 
     if (bestLocation) {
       const bestQty = Math.max(0, Number(bestLocation.onHand) || 0);
+      bestLocationId = bestLocation.locationId;
 
       if (bestQty >= orderedQty) {
         bestLocationText = `${bestLocation.locationName} can fulfill (${bestQty} on hand)`;
-      } else if (bestQty > 0) {
-        bestLocationText = `${bestLocation.locationName} has the most stock (${bestQty} on hand)`;
+        bestLocationCanFulfill = true;
       }
     }
 
@@ -203,6 +209,8 @@ function Extension() {
       outOfStock,
       lowStock,
       bestLocationText,
+      bestLocationId,
+      bestLocationCanFulfill,
     };
   }
 
@@ -539,31 +547,70 @@ function Extension() {
                               ) : (
                                 <s-box paddingBlockStart="extra-tight">
                                   <s-stack direction="block" gap="extra-tight">
-                                    {item.locations.map((loc) => (
-                                      <s-text
-                                        key={loc.locationId}
-                                        appearance="subdued"
-                                        size="small"
-                                      >
-                                        <s-text size="small" type="strong">
-                                          {loc.locationName}:
-                                        </s-text>{" "}
-                                        On hand: {loc.onHand ?? 0}
-                                        {"  •  "}Committed: {loc.committed ?? 0}
-                                        {"  •  "}Available: {loc.available ?? 0}
-                                      </s-text>
-                                    ))}
+                                    {item.locations.map((loc) => {
+                                      const isRecommendedLocation =
+                                        settings.showFulfillmentHint &&
+                                        item.bestLocationCanFulfill &&
+                                        loc.locationId === item.bestLocationId;
+
+                                      return (
+                                        <s-inline-stack
+                                          key={loc.locationId}
+                                          gap="extra-tight"
+                                          alignment="center"
+                                        >
+                                          {isRecommendedLocation ? (
+                                            <s-icon
+                                              type="check-circle"
+                                              tone="success"
+                                              size="small"
+                                            />
+                                          ) : null}
+                                          <s-text
+                                            appearance={
+                                              isRecommendedLocation
+                                                ? undefined
+                                                : "subdued"
+                                            }
+                                            tone={
+                                              isRecommendedLocation
+                                                ? "success"
+                                                : undefined
+                                            }
+                                            size="small"
+                                          >
+                                            <s-text
+                                              size="small"
+                                              type="strong"
+                                              tone={
+                                                isRecommendedLocation
+                                                  ? "success"
+                                                  : undefined
+                                              }
+                                            >
+                                              {loc.locationName}:
+                                            </s-text>{" "}
+                                            On hand: {loc.onHand ?? 0}
+                                            {"  •  "}Committed:{" "}
+                                            {loc.committed ?? 0}
+                                            {"  •  "}Available:{" "}
+                                            {loc.available ?? 0}
+                                          </s-text>
+                                        </s-inline-stack>
+                                      );
+                                    })}
                                   </s-stack>
                                 </s-box>
                               )}
 
                               {item.tracked !== false &&
-                              settings.showFulfillmentHint ? (
+                              settings.showFulfillmentHint &&
+                              !item.bestLocationCanFulfill ? (
                                 <s-inline-stack
                                   gap="extra-tight"
                                   alignment="start"
                                 >
-                                  <s-badge tone="success">
+                                  <s-badge tone="critical" icon="alert-circle">
                                     {item.bestLocationText}
                                   </s-badge>
                                 </s-inline-stack>
@@ -587,7 +634,7 @@ function Extension() {
                                   gap="extra-tight"
                                   alignment="start"
                                 >
-                                  <s-badge tone="critical">
+                                  <s-badge tone="critical" icon="alert-circle">
                                     Out of stock
                                   </s-badge>
                                 </s-inline-stack>
