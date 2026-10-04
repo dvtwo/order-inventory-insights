@@ -554,49 +554,45 @@ function Extension() {
                                         loc.locationId === item.bestLocationId;
 
                                       return (
-                                        <s-inline-stack
+                                        <s-box
                                           key={loc.locationId}
-                                          gap="extra-tight"
-                                          alignment="center"
+                                          paddingBlock={
+                                            isRecommendedLocation
+                                              ? "extra-tight"
+                                              : "none"
+                                          }
                                         >
                                           {isRecommendedLocation ? (
-                                            <s-icon
-                                              type="check-circle"
+                                            <s-badge
                                               tone="success"
-                                              size="small"
-                                            />
-                                          ) : null}
-                                          <s-text
-                                            appearance={
-                                              isRecommendedLocation
-                                                ? undefined
-                                                : "subdued"
-                                            }
-                                            tone={
-                                              isRecommendedLocation
-                                                ? "success"
-                                                : undefined
-                                            }
-                                            size="small"
-                                          >
-                                            <s-text
-                                              size="small"
-                                              type="strong"
-                                              tone={
-                                                isRecommendedLocation
-                                                  ? "success"
-                                                  : undefined
-                                              }
+                                              icon="check-circle"
                                             >
-                                              {loc.locationName}:
-                                            </s-text>{" "}
-                                            On hand: {loc.onHand ?? 0}
-                                            {"  •  "}Committed:{" "}
-                                            {loc.committed ?? 0}
-                                            {"  •  "}Available:{" "}
-                                            {loc.available ?? 0}
-                                          </s-text>
-                                        </s-inline-stack>
+                                              {loc.locationName}: On hand:{" "}
+                                              {loc.onHand ?? 0}
+                                              {"  •  "}Committed:{" "}
+                                              {loc.committed ?? 0}
+                                              {"  •  "}Available:{" "}
+                                              {loc.available ?? 0}
+                                            </s-badge>
+                                          ) : (
+                                            <s-text
+                                              appearance="subdued"
+                                              size="small"
+                                            >
+                                              <s-text
+                                                size="small"
+                                                type="strong"
+                                              >
+                                                {loc.locationName}:
+                                              </s-text>{" "}
+                                              On hand: {loc.onHand ?? 0}
+                                              {"  •  "}Committed:{" "}
+                                              {loc.committed ?? 0}
+                                              {"  •  "}Available:{" "}
+                                              {loc.available ?? 0}
+                                            </s-text>
+                                          )}
+                                        </s-box>
                                       );
                                     })}
                                   </s-stack>
