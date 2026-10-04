@@ -15,6 +15,7 @@ function Extension() {
     lowStockThreshold: 2,
     showOutOfStockHighlight: true,
     showFulfillmentHint: true,
+    enabledLocationIds: null,
     appLocked: true,
     billingStatus: "NOT_ACTIVE",
     billingPlanName: "",
@@ -48,6 +49,9 @@ function Extension() {
         lowStockThreshold: Number(json?.lowStockThreshold ?? 2),
         showOutOfStockHighlight: json?.showOutOfStockHighlight ?? true,
         showFulfillmentHint: json?.showFulfillmentHint ?? true,
+        enabledLocationIds: Array.isArray(json?.enabledLocationIds)
+          ? json.enabledLocationIds
+          : null,
       };
     } catch (err) {
       console.error("Settings load failed:", err); // only keep this one for safety
@@ -55,6 +59,7 @@ function Extension() {
         lowStockThreshold: 2,
         showOutOfStockHighlight: true,
         showFulfillmentHint: true,
+        enabledLocationIds: null,
       };
     }
   }
@@ -134,6 +139,17 @@ function Extension() {
     }
 
     const safeLocations = Array.isArray(locations) ? locations : [];
+
+    if (safeLocations.length === 0) {
+      return {
+        totalOnHand: 0,
+        totalCommitted: 0,
+        totalAvailable: 0,
+        outOfStock: false,
+        lowStock: false,
+        bestLocationText: "No enabled inventory locations",
+      };
+    }
 
     const totalOnHand = safeLocations.reduce(
       (sum, loc) => sum + Math.max(0, Number(loc.onHand) || 0),
@@ -229,6 +245,14 @@ function Extension() {
           id: edge.node.id,
           name: edge.node.name,
         })) || [];
+      const enabledLocationSet = Array.isArray(
+        loadedSettings.enabledLocationIds,
+      )
+        ? new Set(loadedSettings.enabledLocationIds)
+        : null;
+      const visibleLocations = enabledLocationSet
+        ? allLocations.filter((location) => enabledLocationSet.has(location.id))
+        : allLocations;
 
       const orderResult = await adminGraphQL(
         `
@@ -303,7 +327,7 @@ function Extension() {
         };
 
         if (!inventoryItemId || tracked === false) {
-          const mergedLocations = allLocations.map((loc) => ({
+          const mergedLocations = visibleLocations.map((loc) => ({
             locationId: loc.id,
             locationName: loc.name,
             onHand: 0,
@@ -375,7 +399,7 @@ function Extension() {
           }
         }
 
-        const mergedLocations = allLocations.map((loc) => {
+        const mergedLocations = visibleLocations.map((loc) => {
           const match = levelMap.get(loc.id);
           return {
             locationId: loc.id,

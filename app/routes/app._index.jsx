@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState, useCallback} from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   AppProvider,
   Page,
@@ -18,7 +18,7 @@ import {
 } from "@shopify/polaris";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import db from "../db.server";
-import {authenticate} from "../shopify.server";
+import { authenticate } from "../shopify.server";
 import {
   useLoaderData,
   useSearchParams,
@@ -88,12 +88,64 @@ function billingStatusMessage(status, hasActivePayment) {
   }
 }
 
-export const loader = async ({request}) => {
-  const {admin, session} = await authenticate.admin(request);
+function normalizeLocationIds(value) {
+  return Array.isArray(value)
+    ? value.filter((id) => typeof id === "string" && id.length > 0)
+    : null;
+}
+
+function parseEnabledLocationIds(value) {
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((id) => typeof id === "string" && id.length > 0)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+async function loadInventoryLocations(admin) {
+  try {
+    const response = await admin.graphql(
+      `#graphql
+        query InventoryLocations {
+          locations(first: 100, includeInactive: false) {
+            edges {
+              node {
+                id
+                name
+              }
+            }
+          }
+        }
+      `,
+    );
+
+    const json = await response.json();
+
+    return (
+      json?.data?.locations?.edges?.map((edge) => ({
+        id: edge.node.id,
+        name: edge.node.name,
+      })) || []
+    );
+  } catch (error) {
+    console.error("Locations loader error:", error);
+    return [];
+  }
+}
+
+export const loader = async ({ request }) => {
+  const { admin, session } = await authenticate.admin(request);
   const url = new URL(request.url);
 
   let settings = await db.appSettings.findUnique({
-    where: {shop: session.shop},
+    where: { shop: session.shop },
   });
 
   if (!settings) {
@@ -227,6 +279,14 @@ export const loader = async ({request}) => {
     };
   }
 
+  const inventoryLocations = await loadInventoryLocations(admin);
+  const savedEnabledLocationIds = normalizeLocationIds(
+    settings.enabledLocationIds,
+  );
+  const enabledLocationIds =
+    savedEnabledLocationIds ??
+    inventoryLocations.map((location) => location.id);
+  const enabledLocationIdSet = new Set(enabledLocationIds);
   const storeHandle = session.shop.replace(".myshopify.com", "");
 
   return {
@@ -237,6 +297,11 @@ export const loader = async ({request}) => {
       showOutOfStockHighlight: settings.showOutOfStockHighlight,
       showFulfillmentHint: settings.showFulfillmentHint,
       onboardingHidden: settings.onboardingHidden ?? false,
+      enabledLocationIds,
+      inventoryLocations: inventoryLocations.map((location) => ({
+        ...location,
+        enabled: enabledLocationIdSet.has(location.id),
+      })),
     },
     billing: {
       ...billingInfo,
@@ -245,8 +310,8 @@ export const loader = async ({request}) => {
   };
 };
 
-export const action = async ({request}) => {
-  const {session} = await authenticate.admin(request);
+export const action = async ({ request }) => {
+  const { session } = await authenticate.admin(request);
   const formData = await request.formData();
 
   const intent = formData.get("intent");
@@ -255,8 +320,8 @@ export const action = async ({request}) => {
     const onboardingHidden = intent === "hideOnboarding";
 
     await db.appSettings.upsert({
-      where: {shop: session.shop},
-      update: {onboardingHidden},
+      where: { shop: session.shop },
+      update: { onboardingHidden },
       create: {
         shop: session.shop,
         lowStockThreshold: 2,
@@ -266,27 +331,31 @@ export const action = async ({request}) => {
       },
     });
 
-    return {success: true};
+    return { success: true };
   }
 
   const lowStockThreshold = Number(formData.get("lowStockThreshold") || 2);
   const showOutOfStockHighlight =
     formData.get("showOutOfStockHighlight") === "true";
-  const showFulfillmentHint =
-    formData.get("showFulfillmentHint") === "true";
+  const showFulfillmentHint = formData.get("showFulfillmentHint") === "true";
+  const enabledLocationIds = parseEnabledLocationIds(
+    formData.get("enabledLocationIds"),
+  );
 
   await db.appSettings.upsert({
-    where: {shop: session.shop},
+    where: { shop: session.shop },
     update: {
       lowStockThreshold,
       showOutOfStockHighlight,
       showFulfillmentHint,
+      enabledLocationIds,
     },
     create: {
       shop: session.shop,
       lowStockThreshold,
       showOutOfStockHighlight,
       showFulfillmentHint,
+      enabledLocationIds,
     },
   });
 
@@ -295,7 +364,7 @@ export const action = async ({request}) => {
   };
 };
 
-function SummaryTile({label, value}) {
+function SummaryTile({ label, value }) {
   return (
     <Box
       padding="400"
@@ -316,7 +385,7 @@ function SummaryTile({label, value}) {
   );
 }
 
-function FeatureCard({title, text}) {
+function FeatureCard({ title, text }) {
   return (
     <Card>
       <Box padding="400">
@@ -333,7 +402,7 @@ function FeatureCard({title, text}) {
   );
 }
 
-function OnboardingStep({stepNumber, title, text}) {
+function OnboardingStep({ stepNumber, title, text }) {
   return (
     <div style={styles.stepRow}>
       <div style={styles.stepNumber}>{stepNumber}</div>
@@ -353,7 +422,7 @@ function OnboardingStep({stepNumber, title, text}) {
 }
 
 export default function AppIndex() {
-  const {shop, shopAdminOrdersUrl, settings, billing} = useLoaderData();
+  const { shop, shopAdminOrdersUrl, settings, billing } = useLoaderData();
   const actionData = useActionData();
   const navigation = useNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -373,6 +442,11 @@ export default function AppIndex() {
   const [showFulfillmentHint, setShowFulfillmentHint] = useState(
     Boolean(settings.showFulfillmentHint),
   );
+  const [enabledLocationIds, setEnabledLocationIds] = useState(
+    settings.enabledLocationIds || [],
+  );
+  const inventoryLocations = settings.inventoryLocations || [];
+  const enabledLocationCount = enabledLocationIds.length;
 
   const pendingIntent = onboardingFetcher.formData?.get("intent");
   const onboardingHidden =
@@ -386,6 +460,7 @@ export default function AppIndex() {
     setLowStockThreshold(String(settings.lowStockThreshold ?? 2));
     setShowOutOfStockHighlight(Boolean(settings.showOutOfStockHighlight));
     setShowFulfillmentHint(Boolean(settings.showFulfillmentHint));
+    setEnabledLocationIds(settings.enabledLocationIds || []);
   }, [settings]);
 
   useEffect(() => {
@@ -397,18 +472,37 @@ export default function AppIndex() {
   }, [hasActivePlan, requestedTab, searchParams, setSearchParams]);
 
   const hideOnboarding = useCallback(() => {
-    onboardingFetcher.submit({intent: "hideOnboarding"}, {method: "post"});
+    onboardingFetcher.submit({ intent: "hideOnboarding" }, { method: "post" });
   }, [onboardingFetcher]);
 
   const showOnboarding = useCallback(() => {
-    onboardingFetcher.submit({intent: "showOnboarding"}, {method: "post"});
+    onboardingFetcher.submit({ intent: "showOnboarding" }, { method: "post" });
   }, [onboardingFetcher]);
+
+  const toggleLocation = useCallback(
+    (locationId, enabled) => {
+      setEnabledLocationIds((currentIds) => {
+        const currentSet = new Set(currentIds);
+
+        if (enabled) {
+          currentSet.add(locationId);
+        } else {
+          currentSet.delete(locationId);
+        }
+
+        return inventoryLocations
+          .map((location) => location.id)
+          .filter((id) => currentSet.has(id));
+      });
+    },
+    [inventoryLocations],
+  );
 
   const tabs = useMemo(
     () => [
-      {id: "home", content: "Home"},
-      {id: "settings", content: "Settings"},
-      {id: "billing", content: "Billing"},
+      { id: "home", content: "Home" },
+      { id: "settings", content: "Settings" },
+      { id: "billing", content: "Billing" },
     ],
     [],
   );
@@ -477,7 +571,7 @@ export default function AppIndex() {
                       </div>
                     )}
 
-                    <InlineGrid columns={{xs: 1, md: 3}} gap="400">
+                    <InlineGrid columns={{ xs: 1, md: 3 }} gap="400">
                       <SummaryTile label="Connected shop" value={shop} />
                       <SummaryTile
                         label="Low stock threshold"
@@ -519,7 +613,7 @@ export default function AppIndex() {
                                   href={shopAdminOrdersUrl}
                                   target="_top"
                                   rel="noreferrer"
-                                  style={{textDecoration: "none"}}
+                                  style={{ textDecoration: "none" }}
                                 >
                                   <Button variant="primary">
                                     Open Shopify Orders
@@ -544,7 +638,7 @@ export default function AppIndex() {
                                 <OnboardingStep
                                   stepNumber="2"
                                   title="Add the OrderSight block"
-                                  text='On the order page, scroll to the Blocks section, click “+ Block”, then add “OrderSight Inventory Insights”.'
+                                  text="On the order page, scroll to the Blocks section, click “+ Block”, then add “OrderSight Inventory Insights”."
                                 />
                                 <OnboardingStep
                                   stepNumber="3"
@@ -613,7 +707,7 @@ export default function AppIndex() {
                                 href={shopAdminOrdersUrl}
                                 target="_top"
                                 rel="noreferrer"
-                                style={{textDecoration: "none"}}
+                                style={{ textDecoration: "none" }}
                               >
                                 <Button variant="primary">
                                   Open Shopify Orders
@@ -627,7 +721,7 @@ export default function AppIndex() {
                   )}
 
                   <Layout.Section>
-                    <InlineGrid columns={{xs: 1, md: 3}} gap="400">
+                    <InlineGrid columns={{ xs: 1, md: 3 }} gap="400">
                       <FeatureCard
                         title="Low stock alerts"
                         text="Surface inventory pressure early so teams can act before delays or backorders happen."
@@ -724,6 +818,11 @@ export default function AppIndex() {
                         name="showFulfillmentHint"
                         value={showFulfillmentHint ? "true" : "false"}
                       />
+                      <input
+                        type="hidden"
+                        name="enabledLocationIds"
+                        value={JSON.stringify(enabledLocationIds)}
+                      />
 
                       <Card>
                         <Box padding="500">
@@ -781,6 +880,50 @@ export default function AppIndex() {
                               helpText="Shows the best fulfillment location suggestion when available."
                             />
                           </div>
+
+                          <div style={styles.divider} />
+
+                          <BlockStack gap="300">
+                            <div>
+                              <Text as="h3" variant="headingSm">
+                                Inventory locations
+                              </Text>
+                              <Box paddingBlockStart="100">
+                                <Text as="p" variant="bodyMd" tone="subdued">
+                                  Choose which Shopify locations appear inside
+                                  the order page block.
+                                </Text>
+                              </Box>
+                            </div>
+
+                            {inventoryLocations.length === 0 ? (
+                              <Banner tone="warning">
+                                <p>
+                                  No active inventory locations were found for
+                                  this shop.
+                                </p>
+                              </Banner>
+                            ) : (
+                              <div style={styles.locationList}>
+                                {inventoryLocations.map((location) => (
+                                  <div
+                                    key={location.id}
+                                    style={styles.locationRow}
+                                  >
+                                    <Checkbox
+                                      label={location.name}
+                                      checked={enabledLocationIds.includes(
+                                        location.id,
+                                      )}
+                                      onChange={(enabled) =>
+                                        toggleLocation(location.id, enabled)
+                                      }
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </BlockStack>
                         </Box>
                       </Card>
                     </Form>
@@ -814,7 +957,7 @@ export default function AppIndex() {
                             </Badge>
                           </div>
 
-                          <div style={styles.listRowNoBorder}>
+                          <div style={styles.listRow}>
                             <Text as="span" variant="bodyMd">
                               Fulfillment suggestion
                             </Text>
@@ -822,6 +965,20 @@ export default function AppIndex() {
                               tone={showFulfillmentHint ? "success" : undefined}
                             >
                               {showFulfillmentHint ? "Enabled" : "Disabled"}
+                            </Badge>
+                          </div>
+
+                          <div style={styles.listRowNoBorder}>
+                            <Text as="span" variant="bodyMd">
+                              Active locations
+                            </Text>
+                            <Badge
+                              tone={
+                                enabledLocationCount ? "success" : "warning"
+                              }
+                            >
+                              {enabledLocationCount} of{" "}
+                              {inventoryLocations.length}
                             </Badge>
                           </div>
                         </div>
@@ -852,7 +1009,7 @@ export default function AppIndex() {
                             href={billing.managedPricingUrl}
                             target="_top"
                             rel="noreferrer"
-                            style={{textDecoration: "none"}}
+                            style={{ textDecoration: "none" }}
                           >
                             <Button variant="primary">
                               Manage Shopify plan
@@ -913,7 +1070,9 @@ export default function AppIndex() {
                         )}
 
                         <div style={styles.trialPoints}>
-                          <div style={styles.trialPoint}>• 7-day free trial</div>
+                          <div style={styles.trialPoint}>
+                            • 7-day free trial
+                          </div>
                           <div style={styles.trialPoint}>
                             • $9.99 USD/month after trial
                           </div>
@@ -1097,6 +1256,19 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "16px",
+  },
+  locationList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    padding: "16px",
+    border: "1px solid #e1e3e5",
+    borderRadius: "8px",
+    background: "#f6f6f7",
+  },
+  locationRow: {
+    display: "flex",
+    alignItems: "center",
   },
   listRows: {
     display: "flex",
