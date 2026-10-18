@@ -457,9 +457,9 @@ function Extension() {
   return (
     <s-admin-block
       heading="Inventory Availability"
-      collapsed-summary={collapsedSummary}
+      collapsedSummary={collapsedSummary}
     >
-      <s-stack direction="block" gap="extra-tight">
+      <s-stack direction="block" gap="small-200">
         {loading ? (
           <s-box padding="small">
             <s-text>Loading inventory…</s-text>
@@ -492,11 +492,11 @@ function Extension() {
 
                   return (
                     <s-box key={`${item.sku}-${actualIndex}`} padding="none">
-                      <s-stack direction="block" gap="extra-tight">
+                      <s-stack direction="block" gap="small-200">
                         <s-stack
                           direction="inline"
                           gap="small"
-                          alignment="start"
+                          alignItems="start"
                         >
                           <s-box inlineSize="28px" minInlineSize="28px">
                             {item.imageUrl ? (
@@ -505,8 +505,7 @@ function Extension() {
                                 alt={item.imageAlt}
                                 aspectRatio="1/1"
                                 objectFit="contain"
-                                inlineSize="28px"
-                                blockSize="28px"
+                                inlineSize="fill"
                                 borderRadius="small"
                               />
                             ) : (
@@ -520,33 +519,29 @@ function Extension() {
                             )}
                           </s-box>
 
-                          <s-box inlineSize="fill">
+                          <s-box inlineSize="100%">
                             <s-stack direction="block" gap="none">
-                              <s-text type="strong" numberOfLines={1}>
+                              <s-text type="strong">
                                 {item.productTitle || item.name}
                               </s-text>
 
                               {item.variantTitle ? (
-                                <s-text
-                                  appearance="subdued"
-                                  size="small"
-                                  numberOfLines={1}
-                                >
+                                <s-text color="subdued">
                                   {item.variantTitle}
                                 </s-text>
                               ) : null}
 
-                              <s-text appearance="subdued" size="small">
+                              <s-text color="subdued">
                                 SKU: {item.sku} | Qty: {item.orderedQty}
                               </s-text>
 
                               {item.tracked === false ? (
-                                <s-text appearance="subdued" size="small">
+                                <s-text color="subdued">
                                   Tracking disabled
                                 </s-text>
                               ) : (
-                                <s-box paddingBlockStart="extra-tight">
-                                  <s-stack direction="block" gap="extra-tight">
+                                <s-box paddingBlockStart="small-200">
+                                  <s-stack direction="block" gap="small-200">
                                     {item.locations.map((loc) => {
                                       const isRecommendedLocation =
                                         settings.showFulfillmentHint &&
@@ -558,7 +553,7 @@ function Extension() {
                                           key={loc.locationId}
                                           paddingBlock={
                                             isRecommendedLocation
-                                              ? "extra-tight"
+                                              ? "small-200"
                                               : "none"
                                           }
                                         >
@@ -575,14 +570,8 @@ function Extension() {
                                               {loc.available ?? 0}
                                             </s-badge>
                                           ) : (
-                                            <s-text
-                                              appearance="subdued"
-                                              size="small"
-                                            >
-                                              <s-text
-                                                size="small"
-                                                type="strong"
-                                              >
+                                            <s-text color="subdued">
+                                              <s-text type="strong">
                                                 {loc.locationName}:
                                               </s-text>{" "}
                                               On hand: {loc.onHand ?? 0}
@@ -602,38 +591,41 @@ function Extension() {
                               {item.tracked !== false &&
                               settings.showFulfillmentHint &&
                               !item.bestLocationCanFulfill ? (
-                                <s-inline-stack
-                                  gap="extra-tight"
-                                  alignment="start"
+                                <s-stack
+                                  direction="inline"
+                                  gap="small-200"
+                                  alignItems="start"
                                 >
                                   <s-badge tone="critical" icon="alert-circle">
                                     {item.bestLocationText}
                                   </s-badge>
-                                </s-inline-stack>
+                                </s-stack>
                               ) : null}
 
                               {item.tracked !== false && item.lowStock ? (
-                                <s-inline-stack
-                                  gap="extra-tight"
-                                  alignment="start"
+                                <s-stack
+                                  direction="inline"
+                                  gap="small-200"
+                                  alignItems="start"
                                 >
                                   <s-badge tone="warning">
                                     Low stock ({item.totalOnHand} on hand)
                                   </s-badge>
-                                </s-inline-stack>
+                                </s-stack>
                               ) : null}
 
                               {item.tracked !== false &&
                               item.outOfStock &&
                               settings.showOutOfStockHighlight ? (
-                                <s-inline-stack
-                                  gap="extra-tight"
-                                  alignment="start"
+                                <s-stack
+                                  direction="inline"
+                                  gap="small-200"
+                                  alignItems="start"
                                 >
                                   <s-badge tone="critical" icon="alert-circle">
                                     Out of stock
                                   </s-badge>
-                                </s-inline-stack>
+                                </s-stack>
                               ) : null}
                             </s-stack>
                           </s-box>
@@ -657,7 +649,7 @@ function Extension() {
                 paddingBlockStart="none"
                 paddingBlockEnd="small"
               >
-                <s-stack direction="inline" gap="small" alignment="center">
+                <s-stack direction="inline" gap="small" alignItems="center">
                   <s-button
                     disabled={page <= 1}
                     onClick={() =>
@@ -667,7 +659,7 @@ function Extension() {
                     Previous
                   </s-button>
 
-                  <s-text appearance="subdued" size="small">
+                  <s-text color="subdued">
                     Page {page} of {totalPages}
                   </s-text>
 
