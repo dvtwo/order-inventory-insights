@@ -443,7 +443,7 @@ function Extension() {
       heading="Inventory Availability"
       collapsedSummary={collapsedSummary}
     >
-      <s-stack direction="block" gap="small-200">
+      <s-stack direction="block" gap="small-100">
         {loading ? (
           <s-box padding="small">
             <s-text>Loading inventory…</s-text>
@@ -487,9 +487,9 @@ function Extension() {
 
                   return (
                     <s-box key={`${item.sku}-${actualIndex}`} padding="none">
-                      <s-stack direction="block" gap="small-200">
-                        <s-stack
-                          direction="inline"
+                      <s-stack direction="block" gap="small-100">
+                        <s-grid
+                          gridTemplateColumns="28px minmax(0, 1fr)"
                           gap="small"
                           alignItems="start"
                         >
@@ -500,7 +500,8 @@ function Extension() {
                                 alt={item.imageAlt}
                                 aspectRatio="1/1"
                                 objectFit="contain"
-                                inlineSize="fill"
+                                inlineSize="28px"
+                                blockSize="28px"
                                 borderRadius="small"
                               />
                             ) : (
@@ -514,29 +515,29 @@ function Extension() {
                             )}
                           </s-box>
 
-                          <s-box inlineSize="100%">
+                          <s-box>
                             <s-stack direction="block" gap="none">
-                              <s-text type="strong">
+                              <s-text type="strong" fontSize="base">
                                 {item.productTitle || item.name}
                               </s-text>
 
                               {item.variantTitle ? (
-                                <s-text color="subdued">
+                                <s-text color="subdued" fontSize="small">
                                   {item.variantTitle}
                                 </s-text>
                               ) : null}
 
-                              <s-text color="subdued">
+                              <s-text color="subdued" fontSize="small">
                                 SKU: {item.sku} | Qty: {item.orderedQty}
                               </s-text>
 
                               {item.tracked === false ? (
-                                <s-text color="subdued">
+                                <s-text color="subdued" fontSize="small">
                                   Tracking disabled
                                 </s-text>
                               ) : (
-                                <s-box paddingBlockStart="small-200">
-                                  <s-stack direction="block" gap="small-200">
+                                <s-box paddingBlockStart="small-100">
+                                  <s-stack direction="block" gap="small-100">
                                     {item.locations.map((loc) => {
                                       const isRecommendedLocation =
                                         settings.showFulfillmentHint &&
@@ -548,7 +549,7 @@ function Extension() {
                                           key={loc.locationId}
                                           paddingBlock={
                                             isRecommendedLocation
-                                              ? "small-200"
+                                              ? "small-100"
                                               : "none"
                                           }
                                         >
@@ -565,8 +566,8 @@ function Extension() {
                                               {loc.available ?? 0}
                                             </s-badge>
                                           ) : (
-                                            <s-text color="subdued">
-                                              <s-text type="strong">
+                                            <s-text color="subdued" fontSize="small">
+                                              <s-text type="strong" fontSize="small">
                                                 {loc.locationName}:
                                               </s-text>{" "}
                                               On hand: {loc.onHand ?? 0}
@@ -588,7 +589,7 @@ function Extension() {
                               !item.bestLocationCanFulfill ? (
                                 <s-stack
                                   direction="inline"
-                                  gap="small-200"
+                                  gap="small-100"
                                   alignItems="start"
                                 >
                                   <s-badge tone="critical" icon="alert-circle">
@@ -600,7 +601,7 @@ function Extension() {
                               {item.tracked !== false && item.lowStock ? (
                                 <s-stack
                                   direction="inline"
-                                  gap="small-200"
+                                  gap="small-100"
                                   alignItems="start"
                                 >
                                   <s-badge tone="warning">
@@ -614,7 +615,7 @@ function Extension() {
                               settings.showOutOfStockHighlight ? (
                                 <s-stack
                                   direction="inline"
-                                  gap="small-200"
+                                  gap="small-100"
                                   alignItems="start"
                                 >
                                   <s-badge tone="critical" icon="alert-circle">
@@ -624,7 +625,7 @@ function Extension() {
                               ) : null}
                             </s-stack>
                           </s-box>
-                        </s-stack>
+                        </s-grid>
 
                         {!isLastVisible ? (
                           <s-box paddingBlockStart="small">
