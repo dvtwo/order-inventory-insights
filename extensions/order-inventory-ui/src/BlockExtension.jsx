@@ -79,36 +79,20 @@ function Extension() {
     return json;
   }
 
-  async function loadBillingStatus() {
+    async function loadBillingStatus() {
     try {
-      const result = await adminGraphQL(`
-        query ExtensionBillingStatus {
-          currentAppInstallation {
-            activeSubscriptions {
-              id
-              name
-              status
-            }
-          }
-        }
-      `);
+      // Check billing using the store-level endpoint so staff members do not
+      // need billing access in their own Shopify sessions.
+      const response = await fetch("/api/billing-status");
+      if (!response.ok) {
+        throw new Error(`Billing status request failed (${response.status})`);
+      }
 
-      const activeSubscriptions =
-        result?.data?.currentAppInstallation?.activeSubscriptions || [];
-
-      const activeSubscription =
-        activeSubscriptions.find((sub) => sub.status === "ACTIVE") ||
-        activeSubscriptions[0] ||
-        null;
-
-      const billingStatus = activeSubscription?.status || "NOT_ACTIVE";
-      const billingPlanName = activeSubscription?.name || "";
-      const appLocked = billingStatus !== "ACTIVE";
-
+      const billing = await response.json();
       return {
-        appLocked,
-        billingStatus,
-        billingPlanName,
+        appLocked: !billing.hasActivePayment,
+        billingStatus: billing.status,
+        billingPlanName: billing.planName,
       };
     } catch (err) {
       console.error("Billing status load failed:", err);
@@ -471,11 +455,22 @@ function Extension() {
         ) : settings.appLocked ? (
           <s-box padding="small">
             <s-stack direction="block" gap="small">
-              <s-text type="strong">Subscription required</s-text>
-              <s-text>
-                An active subscription is required to view inventory data. Visit
-                the app to manage billing.
-              </s-text>
+{settings.billingStatus === "UNAVAILABLE" ? (
+                <>
+                  <s-text type="strong">Unable to verify subscription</s-text>
+                  <s-text>
+                    Please refresh the order page. If this continues, contact OrderSight support.
+                  </s-text>
+                </>
+              ) : (
+                <>
+                  <s-text type="strong">Subscription required</s-text>
+                  <s-text>
+                    An active subscription is required to view inventory data. Visit
+                    the app to manage billing.
+                  </s-text>
+                </>
+              )}
             </s-stack>
           </s-box>
         ) : items.length === 0 ? (
